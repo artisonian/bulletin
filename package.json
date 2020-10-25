@@ -5,7 +5,8 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public",
-    "test": "uvu -r esm tests"
+    "test": "uvu -r esm tests",
+    "test:watch": "watchlist src tests -- npm test"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^15.1.0",
@@ -18,7 +19,8 @@
     "svelte": "^3.29.4",
     "svelte-preprocess": "^4.5.2",
     "tailwindcss": "^1.9.6",
-    "uvu": "^0.3.4"
+    "uvu": "^0.3.4",
+    "watchlist": "^0.2.3"
   },
   "dependencies": {
     "sirv-cli": "^1.0.8"
