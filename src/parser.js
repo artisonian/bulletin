@@ -1,27 +1,57 @@
-const VALID_SYMBOLS = "!#$%&*+,./:;<=>?@^_`|~-";
-
 export function* lex(input) {
   const scanner = scan(input);
+  let lexer = lexSymbol;
+  while ((lexer = lexer(scanner))) {
+    const token = scanner.pop();
+    if (token) yield token;
+  }
+}
 
-  if (!scanner.accept(VALID_SYMBOLS)) {
+function lexSymbol(scanner) {
+  const valid = "!#$%&*+,./:;<=>?@^_`|~-";
+  if (!scanner.accept(valid)) {
     throw new Error(`Expected symbol, got "${scanner.peek()}"`);
   } else {
-    yield scanner.emit("bullet");
+    scanner.push("bullet");
   }
-  scanner.skipAny(" ");
+  return lexAnnotation;
+}
 
+function lexAnnotation(scanner) {
+  scanner.ignoreRun(" ");
   let chr = scanner.peek();
   if (chr === "[") {
-    scanner.skipAny("[");
+    scanner.ignoreRun("[");
     while (scanner.next() !== "]") {}
     scanner.backup();
-    yield scanner.emit("annotation");
-    scanner.skipAny("]");
+    scanner.push("annotation");
+    scanner.ignoreRun("]");
   }
-  scanner.skipAny(" ");
+  return lexText;
+}
 
-  while (scanner.next()) {}
-  yield scanner.emit("text");
+function lexText(scanner) {
+  scanner.ignoreRun(" ");
+  let chr;
+  while ((chr = scanner.peek2()) && chr !== " #") {
+    scanner.next();
+  }
+  scanner.push("text");
+  return lexTag;
+}
+
+function lexTag(scanner) {
+  scanner.ignoreRun(" ");
+  let chr = scanner.peek();
+  if (chr !== "#") {
+    return null;
+  }
+  scanner.ignoreRun("#");
+  while ((chr = scanner.peek2()) && chr !== " #") {
+    scanner.next();
+  }
+  scanner.push("tag");
+  return lexTag;
 }
 
 function scan(input) {
@@ -29,9 +59,14 @@ function scan(input) {
     input,
     start: 0,
     pos: 0,
+    tokens: [],
+
+    get done() {
+      return this.pos >= this.input.length;
+    },
 
     next() {
-      if (this.pos === this.input.length) {
+      if (this.done) {
         return null;
       }
       const chr = this.input[this.pos];
@@ -50,18 +85,10 @@ function scan(input) {
     },
 
     peek2() {
-      const c1 = this.next();
-      if (c1 == null) {
-        return null;
-      }
-
-      const c2 = this.next();
-      if (c2 == null) {
-        this.pos -= 1;
-        return c2;
-      }
-
-      this.pos -= 2;
+      const pos = this.pos;
+      const c1 = this.next() || "";
+      const c2 = this.next() || "";
+      this.pos = pos;
       return c1 + c2;
     },
 
@@ -81,15 +108,19 @@ function scan(input) {
       this.start = this.pos;
     },
 
-    skipAny(str) {
+    ignoreRun(str) {
       this.acceptRun(str);
       this.ignore();
     },
 
-    emit(type) {
+    push(type) {
       const text = this.input.substring(this.start, this.pos);
       this.start = this.pos;
-      return { token: type, text };
+      this.tokens.push({ token: type, text });
+    },
+
+    pop() {
+      return this.tokens.pop();
     },
   };
 }

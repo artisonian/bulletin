@@ -72,7 +72,6 @@ lex('emits "annotation" token if present', () => {
   }
 });
 
-/* skip
 lex('emits "tag" token if present', () => {
   const tt = [
     [
@@ -107,6 +106,5 @@ lex('emits "tag" token if present', () => {
     assert.equal(tokens, expected);
   }
 });
-*/
 
 lex.run();
