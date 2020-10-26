@@ -1,3 +1,49 @@
+export function parse(input) {
+  const lexer = lex(input);
+  const {
+    value: { token, text },
+    done,
+  } = lexer.next();
+  if (done) {
+    throw new Error(`Unexpected EOF`);
+  } else if (token !== "bullet") {
+    throw new Error(`Expected bullet, got "${token}"`);
+  }
+  switch (text) {
+    case "@":
+      return parseEvent(lexer);
+    default:
+      throw new Error("Invalid entry type");
+  }
+}
+
+function parseEvent(lexer) {
+  const result = { type: "event" };
+  for (const { token, text } of lexer) {
+    if (token === "annotation") {
+      result.time = [];
+      const scanner = scan(text);
+      scanner.acceptRun("0123456789");
+      scanner.push("hours");
+      result.time.push(parseInt(scanner.pop().text, 10));
+      scanner.ignoreRun(":");
+      scanner.acceptRun("0123456789");
+      scanner.push("minutes");
+      result.time.push(parseInt(scanner.pop().text, 10));
+      scanner.ignoreRun(" ");
+      const chr = scanner.next();
+      if (chr === "a" && result.time[0] === 12) {
+        result.time[0] = 0;
+      } else if (chr === "p" && result.time[0] !== 12) {
+        result.time[0] += 12;
+      }
+    } else {
+      result[token] = text;
+    }
+  }
+  return result;
+}
+
 export function* lex(input) {
   const scanner = scan(input);
   let lexer = lexSymbol;

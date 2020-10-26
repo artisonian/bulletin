@@ -108,3 +108,37 @@ lex('emits "tag" token if present', () => {
 });
 
 lex.run();
+
+const parse = suite("parse");
+
+parse("recognizes all-day events", () => {
+  assert.equal(parser.parse("@ Online Conference"), {
+    type: "event",
+    text: "Online Conference",
+  });
+});
+
+parse("recognizes scheduled events", () => {
+  assert.equal(parser.parse("@ [9:30a] Morning Meeting"), {
+    type: "event",
+    text: "Morning Meeting",
+    time: [9, 30],
+  });
+  assert.equal(parser.parse("@ [9:30 am] Morning Meeting"), {
+    type: "event",
+    text: "Morning Meeting",
+    time: [9, 30],
+  });
+  assert.equal(parser.parse("@ [12:00 am] Midnight"), {
+    type: "event",
+    text: "Midnight",
+    time: [0, 0],
+  });
+  assert.equal(parser.parse("@ [12:00 pm] Noon"), {
+    type: "event",
+    text: "Noon",
+    time: [12, 0],
+  });
+});
+
+parse.run();
