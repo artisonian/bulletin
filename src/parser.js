@@ -14,6 +14,8 @@ export function parse(input) {
       return parseEvent(lexer);
     case "!":
       return parseTask(lexer);
+    case "-":
+      return parseNote(lexer);
     default:
       throw new Error("Invalid entry type");
   }
@@ -61,6 +63,23 @@ function parseTask(lexer) {
       result.tags.push(text);
     } else if (token === "annotation") {
       result.state = text;
+    } else {
+      result[token] = text;
+    }
+  }
+  return result;
+}
+
+function parseNote(lexer) {
+  const result = { type: "note" };
+  for (const { token, text } of lexer) {
+    if (token === "tag") {
+      if (!result.tags) {
+        result.tags = [];
+      }
+      result.tags.push(text);
+    } else if (token === "annotation") {
+      result.href = text;
     } else {
       result[token] = text;
     }

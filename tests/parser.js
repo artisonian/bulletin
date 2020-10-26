@@ -162,4 +162,17 @@ parse("recognizes tasks", () => {
   });
 });
 
+parse("recognizes notes", () => {
+  assert.equal(parser.parse("- This is a test #obviously"), {
+    type: "note",
+    text: "This is a test",
+    tags: ["obviously"],
+  });
+  assert.equal(parser.parse("- [https://example.com] Homepage"), {
+    type: "note",
+    text: "Homepage",
+    href: "https://example.com",
+  });
+});
+
 parse.run();
