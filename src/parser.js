@@ -12,6 +12,8 @@ export function parse(input) {
   switch (text) {
     case "@":
       return parseEvent(lexer);
+    case "!":
+      return parseTask(lexer);
     default:
       throw new Error("Invalid entry type");
   }
@@ -20,7 +22,12 @@ export function parse(input) {
 function parseEvent(lexer) {
   const result = { type: "event" };
   for (const { token, text } of lexer) {
-    if (token === "annotation") {
+    if (token === "tag") {
+      if (!result.tags) {
+        result.tags = [];
+      }
+      result.tags.push(text);
+    } else if (token === "annotation") {
       result.time = [];
       const scanner = scan(text);
       scanner.acceptRun("0123456789");
@@ -37,6 +44,23 @@ function parseEvent(lexer) {
       } else if (chr === "p" && result.time[0] !== 12) {
         result.time[0] += 12;
       }
+    } else {
+      result[token] = text;
+    }
+  }
+  return result;
+}
+
+function parseTask(lexer) {
+  const result = { type: "task", state: "ready" };
+  for (const { token, text } of lexer) {
+    if (token === "tag") {
+      if (!result.tags) {
+        result.tags = [];
+      }
+      result.tags.push(text);
+    } else if (token === "annotation") {
+      result.state = text;
     } else {
       result[token] = text;
     }

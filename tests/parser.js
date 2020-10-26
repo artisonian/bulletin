@@ -112,9 +112,14 @@ lex.run();
 const parse = suite("parse");
 
 parse("recognizes all-day events", () => {
-  assert.equal(parser.parse("@ Online Conference"), {
+  assert.equal(parser.parse("@ Conference"), {
     type: "event",
-    text: "Online Conference",
+    text: "Conference",
+  });
+  assert.equal(parser.parse("@ Conference #online"), {
+    type: "event",
+    text: "Conference",
+    tags: ["online"],
   });
 });
 
@@ -129,15 +134,31 @@ parse("recognizes scheduled events", () => {
     text: "Morning Meeting",
     time: [9, 30],
   });
-  assert.equal(parser.parse("@ [12:00 am] Midnight"), {
+  assert.equal(parser.parse("@ [12:00 am] Midnight #edge-case"), {
     type: "event",
     text: "Midnight",
     time: [0, 0],
+    tags: ["edge-case"],
   });
-  assert.equal(parser.parse("@ [12:00 pm] Noon"), {
+  assert.equal(parser.parse("@ [12:00 pm] Noon #edge #case"), {
     type: "event",
     text: "Noon",
     time: [12, 0],
+    tags: ["edge", "case"],
+  });
+});
+
+parse("recognizes tasks", () => {
+  assert.equal(parser.parse("! Take out the papers #andthetrash"), {
+    type: "task",
+    text: "Take out the papers",
+    state: "ready",
+    tags: ["andthetrash"],
+  });
+  assert.equal(parser.parse("! [doing] Scrub the kitchen floor"), {
+    type: "task",
+    text: "Scrub the kitchen floor",
+    state: "doing",
   });
 });
 
